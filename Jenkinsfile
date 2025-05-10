@@ -1,5 +1,17 @@
 pipeline {
-  agent any 
+  agent any
+
+  options{
+        // Max number of build logs to keep and days to keep
+        buildDiscarder(logRotator(numToKeepStr: '5', daysToKeepStr: '5'))
+        // Enable timestamp at each job in the pipeline
+        timestamps()
+    }
+
+    // environment{
+    //     registry = 'quandvrobusto/house-price-prediction-api'
+    //     registryCredential = 'dockerhub'      
+    // }
 
   stages {
     stage('Clone Code') {
@@ -9,6 +21,11 @@ pipeline {
     }
 
     stage('Install Dependencies') {
+      agent {
+        docker {
+          image 'python:3.9'
+        }
+      }
       steps {
         sh 'pip install -r app/requirements.txt'
       }
