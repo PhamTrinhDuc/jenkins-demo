@@ -1,10 +1,5 @@
 pipeline {
-  agent {
-    docker {
-      image 'python:3.9' // Image có Python 3.9 và pip
-      args '-v /var/run/docker.sock:/var/run/docker.sock' // Cho phép dùng Docker
-    }
-  }
+  agent any 
 
   options{
         // Max number of build logs to keep and days to keep
@@ -26,6 +21,11 @@ pipeline {
     }
 
     stage('Install Dependencies') {
+      agent {
+        docker {
+          image 'python:3.9' 
+        }
+      }
       steps {
         sh 'pip install -r app/requirements.txt'
       }
