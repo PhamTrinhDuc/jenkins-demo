@@ -5,7 +5,7 @@ pipeline {
       args '-v /var/run/docker.sock:/var/run/docker.sock' // Cho phép dùng Docker
     }
   }
-  
+
   options{
         // Max number of build logs to keep and days to keep
         buildDiscarder(logRotator(numToKeepStr: '5', daysToKeepStr: '5'))
@@ -13,10 +13,10 @@ pipeline {
         timestamps()
     }
 
-    // environment{
-    //     registry = 'quandvrobusto/house-price-prediction-api'
-    //     registryCredential = 'dockerhub'      
-    // }
+    environment{
+        registry = 'duc8504/jenskins-demo' // Địa chỉ dockerhub
+        registryCredential = 'dockerhub'      
+    }
 
   stages {
     stage('Clone Code') {
@@ -39,14 +39,15 @@ pipeline {
 
     stage('Build Docker Image') {
       steps {
-        sh 'docker build -t jenkins-demo:latest .'
-      }
-    }
-
-    stage('Run Container') {
-      steps {
-        sh 'docker run -d -p 5000:5000 --name jenkins-demo-container jenkins-demo:latest'
-      }
+        script {
+            echo 'Building image for deployment..'
+            dockerImage = docker.build registry + ":$BUILD_NUMBER" 
+            echo 'Pushing image to dockerhub..'
+            docker.withRegistry( '', registryCredential ) {
+                dockerImage.push()
+                dockerImage.push('latest')
+            }
+        }
     }
   }
 }
