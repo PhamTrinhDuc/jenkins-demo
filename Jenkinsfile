@@ -1,54 +1,70 @@
 pipeline {
-  agent any 
+  agent any
 
-  options{
-        // Max number of build logs to keep and days to keep
-        buildDiscarder(logRotator(numToKeepStr: '5', daysToKeepStr: '5'))
-        // Enable timestamp at each job in the pipeline
-        timestamps()
-    }
+  options {
+      buildDiscarder(logRotator(numToKeepStr: '5', daysToKeepStr: '5'))
+      timestamps()
+  }
 
-    environment{
-        registry = 'duc8504/jenskins-demo' // Địa chỉ dockerhub
-        registryCredential = 'dockerhub'      
-    }
+  environment {
+      registry = 'duc8504/jenskins-demo'      // DockerHub repo
+      registryCredential = 'dockerhub'        // ID trong Jenkins Credential
+      imageTag = "${env.BUILD_NUMBER}"        // Tag theo build number
+  }
 
   stages {
     stage('Clone Code') {
       steps {
-        git url: 'https://github.com/PhamTrinhDuc/jenkins-demo.git', branch: 'main'      
+          git url: 'https://github.com/PhamTrinhDuc/jenkins-demo.git', branch: 'main'
       }
     }
 
-    stage('Install Dependencies') {
+    stage('Install & Test') {
       agent {
-        docker {
-          image 'python:3.9' 
-        }
+          docker {
+              image 'python:3.9'
+          }
       }
       steps {
-        sh 'pip install -r requirements.txt && pytest'
-      }
-    }
-
-    stage('Run Tests') {
-      steps {
-        sh 'pytest app/tests'
+          sh '''
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pytest tests/
+          '''
       }
     }
 
     stage('Build Docker Image') {
-      steps {
-        script {
-            echo 'Building image for deployment..'
-            dockerImage = docker.build registry + ":$BUILD_NUMBER" 
-            echo 'Pushing image to dockerhub..'
-            docker.withRegistry( '', registryCredential ) {
-                dockerImage.push()
-                dockerImage.push('latest')
+        steps {
+            script {
+                echo 'Building Docker image...'
+                dockerImage = docker.build("${registry}:${imageTag}")
             }
         }
+    }
+
+    stage('Push to DockerHub') {
+      steps {
+        script {
+          echo 'Pushing Docker image...'
+          docker.withRegistry('', registryCredential) {
+            dockerImage.push()
+            dockerImage.push('latest')
+          }
+        }
       }
+    }
+  }
+
+  post {
+    always {
+        cleanWs()
+    }
+    failure {
+        echo 'Build failed 😢'
+    }
+    success {
+        echo 'Build & Push thành công 🚀'
     }
   }
 }
