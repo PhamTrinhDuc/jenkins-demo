@@ -8,7 +8,7 @@ pipeline {
 
   environment {
       registry = 'duc8504/jenskins-demo'      // DockerHub repo
-      registryCredential = 'dockerhub'        // ID trong Jenkins Credential
+      registryCredential = '328e899f-b43c-49b4-8496-eb74d2560a24'        // ID trong Jenkins Credential
       imageTag = "${env.BUILD_NUMBER}"        // Tag theo build number
   }
 
@@ -68,3 +68,7 @@ pipeline {
     }
   }
 }
+
+
+// env là object đặc biệt Jenkins cung cấp sẵn để truy cập biến môi trường.
+// BUILD_NUMBER là 1 trong số rất nhiều biến có sẵn như: BRANCH_NAME, JOB_NAME, BUILD_URL, GIT_COMMIT, v.v.
